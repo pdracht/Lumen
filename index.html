@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0a08">
+<title>Lumen — v0.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0a08;
+    --bg-soft: #15110d;
+    --ink: #ede4d3;
+    --ink-dim: #a89c87;
+    --ember: #c08030;
+    --ember-bright: #e8a050;
+    --olive: #5a5147;
+    --rule: #2a2520;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 18px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+  .screen { display: none; width: 100%; max-width: 480px; animation: fade-in 0.6s ease-out; }
+  .screen.active { display: block; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  h1 {
+    font-family: 'Cinzel', Georgia, serif; font-weight: 500; font-size: 2.25rem;
+    letter-spacing: 0.18em; text-align: center; margin-bottom: 0.5rem; color: var(--ink);
+  }
+  h1 .accent { color: var(--ember); }
+  .subtitle {
+    text-align: center; font-style: italic; color: var(--ink-dim);
+    font-size: 1rem; margin-bottom: 2.25rem; letter-spacing: 0.02em;
+  }
+  .rule { height: 1px; background: var(--rule); margin: 1.5rem 0; }
+  .warning-card { border: 1px solid var(--rule); padding: 1.6rem 1.4rem; background: var(--bg-soft); }
+  .warning-card h2 {
+    font-family: 'Cinzel', Georgia, serif; font-weight: 400; font-size: 0.9rem;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ember);
+    margin-bottom: 1rem; text-align: center;
+  }
+  .warning-card p { margin-bottom: 0.85rem; color: var(--ink); font-size: 1rem; }
+  .warning-card p.fine { margin-bottom: 0; color: var(--ink-dim); font-size: 0.9rem; font-style: italic; }
+  .warning-card ul { list-style: none; margin: 0.5rem 0 1rem; padding-left: 0; }
+  .warning-card li { padding: 0.3rem 0 0.3rem 1.5rem; position: relative; color: var(--ink); }
+  .warning-card li::before {
+    content: '◇'; position: absolute; left: 0; color: var(--ember);
+    font-size: 0.85rem; top: 0.45rem;
+  }
+  .protocols { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem; }
+  .protocol-card {
+    border: 1px solid var(--rule); padding: 1.25rem 1.1rem; background: transparent;
+    cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%;
+    color: inherit; font-family: inherit; font-size: inherit;
+  }
+  .protocol-card:hover { border-color: var(--olive); background: var(--bg-soft); }
+  .protocol-card.selected { border-color: var(--ember); background: rgba(192, 128, 48, 0.06); }
+  .protocol-name {
+    font-family: 'Cinzel', Georgia, serif; font-size: 1.1rem; letter-spacing: 0.12em;
+    color: var(--ink); margin-bottom: 0.35rem;
+  }
+  .protocol-card.selected .protocol-name { color: var(--ember); }
+  .protocol-meta {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-dim);
+    margin-bottom: 0.6rem;
+  }
+  .protocol-desc { color: var(--ink-dim); font-size: 0.95rem; font-style: italic; line-height: 1.45; }
+  .control { margin-bottom: 1.4rem; }
+  .control-label {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+    margin-bottom: 0.55rem; display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .control-value {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85rem;
+    color: var(--ember); letter-spacing: 0.05em;
+  }
+  .options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .option {
+    flex: 1; min-width: 0; padding: 0.65rem 0.5rem; background: transparent;
+    border: 1px solid var(--rule); color: var(--ink-dim);
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.78rem;
+    letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s ease; text-align: center;
+  }
+  .option:hover { border-color: var(--olive); color: var(--ink); }
+  .option.selected { border-color: var(--ember); color: var(--ember); background: rgba(192, 128, 48, 0.06); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 2px; background: var(--rule); outline: none; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--ember); cursor: pointer;
+    border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--ember);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%; background: var(--ember);
+    cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--ember);
+  }
+  .btn-primary {
+    width: 100%; padding: 1rem; background: var(--ember); color: var(--bg); border: none;
+    font-family: 'Cinzel', Georgia, serif; font-size: 0.95rem; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+  }
+  .btn-primary:hover { background: var(--ember-bright); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { background: var(--rule); color: var(--ink-dim); cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    width: 100%; padding: 0.85rem; background: transparent; color: var(--ink-dim);
+    border: 1px solid var(--rule);
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem;
+    letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.2s ease; margin-top: 0.75rem;
+  }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--olive); }
+  .audio-status {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem;
+    color: var(--ink-dim); letter-spacing: 0.05em; padding: 0.6rem 0.8rem;
+    background: var(--bg-soft); border: 1px solid var(--rule); border-radius: 2px;
+    margin-bottom: 1rem; line-height: 1.5;
+  }
+  .audio-status .ok { color: #6c8c5a; }
+  .audio-status .warn { color: var(--ember); }
+  .audio-status .err { color: #a04428; }
+  #session { position: fixed; inset: 0; background: black; display: none; z-index: 10; cursor: pointer; }
+  #session.active { display: block; }
+  #flicker-surface { position: absolute; inset: 0; background: black; will-change: background-color; }
+  .session-overlay {
+    position: absolute; bottom: 1.5rem; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    z-index: 2; pointer-events: none; mix-blend-mode: difference; color: white;
+    transition: opacity 1s ease; opacity: 0.5;
+  }
+  .session-overlay.hidden { opacity: 0; }
+  .session-phase {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem;
+    letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85;
+  }
+  .session-timer { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85rem; letter-spacing: 0.1em; }
+  .session-hint {
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.62rem;
+    letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.65;
+  }
+  .dev-readout {
+    position: absolute; top: 0.5rem; left: 0.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.65rem;
+    color: white; background: rgba(0,0,0,0.5); padding: 0.4rem 0.6rem;
+    z-index: 3; pointer-events: none; line-height: 1.5; display: none; white-space: pre;
+  }
+  .dev-readout.active { display: block; }
+  .complete-mark {
+    width: 56px; height: 56px; border: 1px solid var(--ember); border-radius: 50%;
+    margin: 0 auto 1.75rem; display: flex; align-items: center; justify-content: center;
+    color: var(--ember); font-size: 1.4rem;
+  }
+  .footer-mark {
+    text-align: center; margin-top: 2.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.62rem;
+    letter-spacing: 0.28em; color: var(--olive); text-transform: uppercase;
+  }
+  @media (max-width: 480px) {
+    body { padding: 1.25rem; }
+    h1 { font-size: 1.85rem; }
+    .warning-card { padding: 1.4rem 1.1rem; }
+    .subtitle { margin-bottom: 1.75rem; }
+  }
+</style>
+</head>
+<body>
+<section class="screen active" id="warning">
+  <h1>L<span class="accent">U</span>MEN</h1>
+  <p class="subtitle">a stroboscopic instrument</p>
+  <div class="warning-card">
+    <h2>Before You Begin</h2>
+    <p>This experience uses bright, rapidly flashing light. Photic stimulation can trigger seizures in people who are susceptible, including those who have never had one.</p>
+    <p><strong>Do not use this if you</strong>:</p>
+    <ul>
+      <li>Have epilepsy or a seizure disorder</li>
+      <li>Are pregnant</li>
+      <li>Are intoxicated, including from medications that lower the seizure threshold</li>
+      <li>Have a heart or vestibular condition</li>
+    </ul>
+    <p>Sit or lie down somewhere safe. Stop immediately if you feel unwell, dizzy, or off. The session can be ended any time by tapping the screen or pressing space.</p>
+    <p class="fine">This is not a medical device, not a therapy, and not a substitute for one.</p>
+  </div>
+  <button class="btn-primary" style="margin-top: 1.5rem;" onclick="goTo('home')">I Understand</button>
+  <p class="footer-mark">v0.2</p>
+</section>
+<section class="screen" id="home">
+  <h1>L<span class="accent">U</span>MEN</h1>
+  <p class="subtitle">choose a protocol</p>
+  <div class="protocols" id="protocol-list"></div>
+  <button class="btn-primary" id="continue-btn" onclick="goTo('prepare')" disabled>Continue</button>
+  <button class="btn-ghost" onclick="goTo('warning')">Back</button>
+</section>
+<section class="screen" id="prepare">
+  <h1>P<span class="accent">R</span>EPARE</h1>
+  <p class="subtitle">a few choices, then close your eyes</p>
+  <div class="audio-status" id="audio-status"></div>
+  <div class="control">
+    <div class="control-label"><span>Audio</span><span class="control-value" id="audio-mode-value">music</span></div>
+    <div class="options" id="audio-options">
+      <button class="option selected" data-mode="music">music</button>
+      <button class="option" data-mode="silent">silent</button>
+    </div>
+  </div>
+  <div class="control">
+    <div class="control-label"><span>Master Brightness</span><span class="control-value" id="brightness-value">100%</span></div>
+    <input type="range" id="brightness" min="0.2" max="1" step="0.05" value="1">
+  </div>
+  <div class="rule"></div>
+  <button class="btn-primary" onclick="startSession()">Begin</button>
+  <button class="btn-ghost" onclick="goTo('home')">Back</button>
+</section>
+<div id="session">
+  <div id="flicker-surface"></div>
+  <div class="session-overlay" id="session-overlay">
+    <div class="session-phase" id="phase-display"></div>
+    <div class="session-timer" id="timer-display">00:00</div>
+    <div class="session-hint">tap to end</div>
+  </div>
+  <div class="dev-readout" id="dev-readout"></div>
+</div>
+<section class="screen" id="complete">
+  <div class="complete-mark">✦</div>
+  <h1>D<span class="accent">O</span>NE</h1>
+  <p class="subtitle">take a breath. take your time.</p>
+  <button class="btn-primary" style="margin-top: 1rem;" onclick="goTo('home')">Begin Again</button>
+  <p class="footer-mark">v0.2</p>
+</section>
+<script>
+const URL_PARAMS = new URLSearchParams(location.search);
+const DEV_MODE = URL_PARAMS.has('dev');
+const SPEED = Math.max(0.1, Math.min(60, parseFloat(URL_PARAMS.get('speed')) || 1));
+
+const PROTOCOLS = {
+  compact: {
+    id: 'compact', name: 'Compact', durationLabel: '20 min',
+    description: 'A short closed-eye session: settling, onset, peak at 10 Hz with color exploration, valley, re-entry. Two-track Greg Haines soundtrack.',
+    duration: 1211,
+    tracks: [
+      { src: 'tracks/azure.m4a', title: 'Azure', artist: 'Greg Haines', startAt: 0 },
+      { src: 'tracks/so-it-goes.m4a', title: 'So It Goes', artist: 'Greg Haines', startAt: 854 },
+    ],
+    phases: [
+      { name: 'Settling', start: 0, end: 90, frequency: 0, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0, brightnessEnd: 0, color: '#ffffff' },
+      { name: 'Onset', start: 90, end: 360, frequency: 6, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.30, brightnessEnd: 0.70, color: '#ffffff' },
+      { name: 'Onset+', start: 360, end: 548, frequency: 8, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.70, brightnessEnd: 0.95, color: '#ffffff' },
+      { name: 'Peak', start: 548, end: 720, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 1.00, brightnessEnd: 1.00, color: '#ffffff' },
+      { name: 'Plateau', start: 720, end: 859, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 1.00, brightnessEnd: 0.95, color: '#ffffff' },
+      { name: 'Color: amber', start: 859, end: 945, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 0.95, color: '#ffd966' },
+      { name: 'Color: cool', start: 945, end: 1030, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 0.95, color: '#a8d8ff' },
+      { name: 'Return white', start: 1030, end: 1074, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 0.70, color: '#ffffff' },
+      { name: 'Valley', start: 1074, end: 1180, frequency: 6, rhythmicity: 'arrhythmic-norm', dutyCycle: 0.30, brightness: 0.50, brightnessEnd: 0.30, color: '#ffffff' },
+      { name: 'Re-entry', start: 1180, end: 1205, frequency: 3, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.30, brightnessEnd: 0.05, color: '#ffffff' },
+      { name: 'Silence', start: 1205, end: 1211, frequency: 0, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0, brightnessEnd: 0, color: '#000000' },
+    ]
+  },
+  longform: {
+    id: 'longform', name: 'Long-form', durationLabel: '90 min',
+    description: 'A 90-minute arc: settling, onset, first peak at 10 Hz, color plateau, valley, integration, optional 18 Hz second peak, long descent, re-entry. Two-track Greg Haines soundtrack anchors the peaks; silence carries the integration.',
+    duration: 5400,
+    tracks: [
+      { src: 'tracks/azure.m4a', title: 'Azure', artist: 'Greg Haines', startAt: 300 },
+      { src: 'tracks/so-it-goes.m4a', title: 'So It Goes', artist: 'Greg Haines', startAt: 3059 },
+    ],
+    phases: [
+      { name: 'Settling', start: 0, end: 300, frequency: 0, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0, brightnessEnd: 0, color: '#000000' },
+      { name: 'Onset', start: 300, end: 848, frequency: 6, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.20, brightnessEnd: 0.70, color: '#ffffff' },
+      { name: 'First peak', start: 848, end: 1159, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.70, brightnessEnd: 1.00, color: '#ffffff' },
+      { name: 'Plateau', start: 1159, end: 1411, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 1.00, brightnessEnd: 0.95, color: '#ffffff' },
+      { name: 'Color: amber', start: 1411, end: 1490, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 0.95, color: '#ffd966' },
+      { name: 'Color: ember', start: 1490, end: 1560, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 0.95, color: '#ff9966' },
+      { name: 'Color: cool', start: 1560, end: 1626, frequency: 8, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.85, brightnessEnd: 0.75, color: '#a8d8ff' },
+      { name: 'First valley', start: 1626, end: 1955, frequency: 6, rhythmicity: 'arrhythmic-norm', dutyCycle: 0.30, brightness: 0.55, brightnessEnd: 0.45, color: '#ffffff' },
+      { name: 'Integration', start: 1955, end: 2809, frequency: 4, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.40, brightnessEnd: 0.40, color: '#ffffff' },
+      { name: 'Renewal', start: 2809, end: 3059, frequency: 8, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.45, brightnessEnd: 0.85, color: '#ffffff' },
+      { name: 'Second peak', start: 3059, end: 3384, frequency: 18, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.95, brightnessEnd: 1.00, color: '#ffffff' },
+      { name: 'Tenderness', start: 3384, end: 3590, frequency: 10, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.85, brightnessEnd: 0.65, color: '#ffd966' },
+      { name: 'Cooldown begins', start: 3590, end: 3727, frequency: 6, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.55, brightnessEnd: 0.40, color: '#ffffff' },
+      { name: 'Long descent', start: 3727, end: 4225, frequency: 5, rhythmicity: 'arrhythmic-norm', dutyCycle: 0.30, brightness: 0.40, brightnessEnd: 0.30, color: '#ffffff' },
+      { name: 'Hold space', start: 4225, end: 4599, frequency: 4, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.30, brightnessEnd: 0.20, color: '#ffffff' },
+      { name: 'Approach silence', start: 4599, end: 5086, frequency: 3, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0.20, brightnessEnd: 0.05, color: '#ffffff' },
+      { name: 'Re-entry', start: 5086, end: 5400, frequency: 0, rhythmicity: 'rhythmic', dutyCycle: 0.30, brightness: 0, brightnessEnd: 0, color: '#000000' },
+    ]
+  }
+};
+
+const state = { selectedProtocolId: null, audioMode: 'music', masterBrightness: 1.0 };
+let session = null;
+let wakeLock = null;
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  return String(Math.floor(sec / 60)).padStart(2,'0') + ':' + String(sec % 60).padStart(2,'0');
+}
+
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [0,0,0];
+}
+
+function scaleColor(hex, brightness) {
+  const [r, g, b] = hexToRgb(hex);
+  return 'rgb(' + ((r*brightness)|0) + ',' + ((g*brightness)|0) + ',' + ((b*brightness)|0) + ')';
+}
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function randexp(mean) { return -Math.log(1 - Math.random()) * mean; }
+
+function buildFlashSchedule(phase) {
+  const events = [];
+  const dur = phase.end - phase.start;
+  if (phase.frequency <= 0) return events;
+  const T = 1 / phase.frequency;
+  const onTime = phase.dutyCycle * T;
+  const offTimeMatched = (1 - phase.dutyCycle) * T;
+  if (phase.rhythmicity === 'rhythmic') {
+    let t = 0;
+    while (t < dur) { events.push({ on: t, off: Math.min(t + onTime, dur) }); t += T; }
+  } else if (phase.rhythmicity === 'arrhythmic-norm') {
+    let t = 0;
+    while (t < dur) {
+      events.push({ on: t, off: Math.min(t + onTime, dur) });
+      let ifi = offTimeMatched + 0.45 * offTimeMatched * randn();
+      ifi = Math.max(0.010, Math.min(5 * offTimeMatched, ifi));
+      t += onTime + ifi;
+    }
+  } else if (phase.rhythmicity === 'arrhythmic-pairs') {
+    const interPairOff = Math.max(0.010, 0.100 / phase.frequency);
+    let t = 0;
+    while (t < dur) {
+      events.push({ on: t, off: Math.min(t + onTime, dur) });
+      t += onTime + interPairOff;
+      if (t >= dur) break;
+      events.push({ on: t, off: Math.min(t + onTime, dur) });
+      t += onTime + Math.max(0.010, randexp(offTimeMatched));
+    }
+  }
+  return events;
+}
+
+class FlickerEngine {
+  constructor(surfaceEl, devEl) {
+    this.surface = surfaceEl;
+    this.devEl = devEl;
+    this.protocol = null;
+    this.phaseIndex = -1;
+    this.currentSchedule = [];
+    this.scheduleIndex = 0;
+    this.lastBg = '';
+  }
+  setProtocol(protocol) {
+    this.protocol = protocol;
+    this.phaseIndex = -1;
+    this.currentSchedule = [];
+    this.scheduleIndex = 0;
+  }
+  _phaseAt(t) {
+    if (!this.protocol) return -1;
+    const phs = this.protocol.phases;
+    if (this.phaseIndex >= 0 && this.phaseIndex < phs.length) {
+      const p = phs[this.phaseIndex];
+      if (t >= p.start && t < p.end) return this.phaseIndex;
+    }
+    for (let i = 0; i < phs.length; i++) {
+      if (t >= phs[i].start && t < phs[i].end) return i;
+    }
+    return -1;
+  }
+  _paint(color) {
+    if (color !== this.lastBg) { this.surface.style.background = color; this.lastBg = color; }
+  }
+  tick(t) {
+    if (!this.protocol) return false;
+    if (t >= this.protocol.duration) { this._paint('rgb(0,0,0)'); return false; }
+    const idx = this._phaseAt(t);
+    if (idx < 0) { this._paint('rgb(0,0,0)'); return true; }
+    const phase = this.protocol.phases[idx];
+    const phaseT = t - phase.start;
+    const phaseDur = phase.end - phase.start;
+    const phaseFrac = Math.max(0, Math.min(1, phaseT / phaseDur));
+    if (idx !== this.phaseIndex) {
+      this.phaseIndex = idx;
+      this.currentSchedule = buildFlashSchedule(phase);
+      this.scheduleIndex = 0;
+    }
+    const brightnessRaw = phase.brightness + (phase.brightnessEnd - phase.brightness) * phaseFrac;
+    const brightness = brightnessRaw * state.masterBrightness;
+    let isOn = false;
+    if (phase.frequency > 0 && this.currentSchedule.length > 0) {
+      while (this.scheduleIndex < this.currentSchedule.length - 1 &&
+             this.currentSchedule[this.scheduleIndex].off < phaseT) {
+        this.scheduleIndex++;
+      }
+      const ev = this.currentSchedule[this.scheduleIndex];
+      if (ev && phaseT >= ev.on && phaseT < ev.off) isOn = true;
+    }
+    this._paint(isOn ? scaleColor(phase.color, brightness) : 'rgb(0,0,0)');
+    if (DEV_MODE && this.devEl) {
+      this.devEl.textContent =
+        't=' + t.toFixed(2) + 's  phase=' + idx + ' ' + phase.name + '\n' +
+        'f=' + phase.frequency + 'Hz  ' + phase.rhythmicity + '\n' +
+        'duty=' + phase.dutyCycle.toFixed(2) +
+        '  brightness=' + brightness.toFixed(2) +
+        '  events=' + this.currentSchedule.length +
+        '  speed=' + SPEED + 'x';
+    }
+    return true;
+  }
+  getCurrentPhaseName() {
+    if (this.phaseIndex < 0 || !this.protocol) return '';
+    return this.protocol.phases[this.phaseIndex].name;
+  }
+}
+
+class AudioEngine {
+  constructor() {
+    this.protocol = null;
+    this.elements = [];
+    this.startedAt = 0;
+    this.enabled = true;
+    this.timer = null;
+  }
+  async loadProtocol(protocol) {
+    this.unload();
+    this.protocol = protocol;
+    for (const track of protocol.tracks) {
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = track.src;
+      const entry = { audio: a, track, started: false, available: false };
+      this.elements.push(entry);
+      try {
+        const head = await fetch(track.src, { method: 'HEAD' });
+        entry.available = head.ok;
+      } catch (e) { entry.available = false; }
+    }
+  }
+  setEnabled(enabled) {
+    this.enabled = enabled;
+    if (!enabled) for (const e of this.elements) try { e.audio.pause(); } catch (err) {}
+  }
+  start() {
+    if (!this.enabled) return;
+    this.startedAt = performance.now();
+    this.timer = setInterval(() => this._cue(), 250);
+  }
+  _cue() {
+    if (!this.protocol) return;
+    const t = (performance.now() - this.startedAt) / 1000 * SPEED;
+    for (const e of this.elements) {
+      if (e.started || !e.available) continue;
+      if (t >= e.track.startAt && t < this.protocol.duration) {
+        const offset = Math.max(0, t - e.track.startAt);
+        try {
+          if (offset > 0.5) e.audio.currentTime = offset;
+          const p = e.audio.play();
+          if (p && p.catch) p.catch(() => {});
+          e.started = true;
+        } catch (err) { e.started = true; }
+      }
+    }
+  }
+  stop() {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    for (const e of this.elements) {
+      try { e.audio.pause(); e.audio.currentTime = 0; } catch (err) {}
+    }
+    for (const e of this.elements) e.started = false;
+  }
+  unload() {
+    this.stop();
+    for (const e of this.elements) try { e.audio.src = ''; } catch (err) {}
+    this.elements = [];
+  }
+}
+
+class Session {
+  constructor(protocol, audioMode) {
+    this.protocol = protocol;
+    this.audioMode = audioMode;
+    this.flicker = new FlickerEngine(
+      document.getElementById('flicker-surface'),
+      document.getElementById('dev-readout')
+    );
+    this.audio = new AudioEngine();
+    this.startedAt = 0;
+    this.raf = null;
+    this.endHandler = null;
+    this.keyHandler = null;
+  }
+  async prepare() {
+    this.flicker.setProtocol(this.protocol);
+    if (this.audioMode === 'music') await this.audio.loadProtocol(this.protocol);
+    else this.audio.setEnabled(false);
+  }
+  start() {
+    this.startedAt = performance.now();
+    this.audio.start();
+    this._tick = this._tick.bind(this);
+    this.raf = requestAnimationFrame(this._tick);
+    const overlay = document.getElementById('session-overlay');
+    if (DEV_MODE) document.getElementById('dev-readout').classList.add('active');
+    else setTimeout(() => overlay.classList.add('hidden'), 6000);
+    setTimeout(() => {
+      const sessionEl = document.getElementById('session');
+      this.endHandler = () => this.stop();
+      sessionEl.addEventListener('click', this.endHandler);
+      this.keyHandler = (e) => {
+        if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') this.stop();
+      };
+      document.addEventListener('keydown', this.keyHandler);
+    }, 250);
+  }
+  _tick(now) {
+    if (this.raf === null) return;
+    const t = (now - this.startedAt) / 1000 * SPEED;
+    const cont = this.flicker.tick(t);
+    document.getElementById('phase-display').textContent = this.flicker.getCurrentPhaseName();
+    document.getElementById('timer-display').textContent = fmtTime(this.protocol.duration / SPEED - (now - this.startedAt) / 1000);
+    if (!cont) { this.stop(); return; }
+    this.raf = requestAnimationFrame(this._tick);
+  }
+  stop() {
+    if (this.raf !== null) { cancelAnimationFrame(this.raf); this.raf = null; }
+    if (this.endHandler) { document.getElementById('session').removeEventListener('click', this.endHandler); this.endHandler = null; }
+    if (this.keyHandler) { document.removeEventListener('keydown', this.keyHandler); this.keyHandler = null; }
+    this.audio.unload();
+    document.getElementById('flicker-surface').style.background = '#000';
+    document.getElementById('dev-readout').classList.remove('active');
+    document.getElementById('session-overlay').classList.remove('hidden');
+    releaseWakeLock();
+    exitFullscreen();
+    setTimeout(() => goTo('complete'), 80);
+  }
+}
+
+async function acquireWakeLock() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') acquireWakeLock();
+});
+
+async function enterFullscreen() {
+  try {
+    const el = document.documentElement;
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+  } catch (e) {}
+}
+function exitFullscreen() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+  } catch (e) {}
+}
+
+function goTo(name) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('session').classList.remove('active');
+  const el = document.getElementById(name);
+  if (el) el.classList.add('active');
+  if (name === 'home') renderProtocolList();
+  if (name === 'prepare') renderPrepare();
+}
+
+function renderProtocolList() {
+  const list = document.getElementById('protocol-list');
+  list.innerHTML = '';
+  for (const p of Object.values(PROTOCOLS)) {
+    const btn = document.createElement('button');
+    btn.className = 'protocol-card';
+    if (state.selectedProtocolId === p.id) btn.classList.add('selected');
+    btn.innerHTML =
+      '<div class="protocol-name">' + p.name + '</div>' +
+      '<div class="protocol-meta">' + p.durationLabel + ' &middot; closed-eye flicker</div>' +
+      '<div class="protocol-desc">' + p.description + '</div>';
+    btn.onclick = () => {
+      state.selectedProtocolId = p.id;
+      renderProtocolList();
+      document.getElementById('continue-btn').disabled = false;
+    };
+    list.appendChild(btn);
+  }
+}
+
+async function renderPrepare() {
+  const protocol = PROTOCOLS[state.selectedProtocolId];
+  if (!protocol) { goTo('home'); return; }
+  const status = document.getElementById('audio-status');
+  status.innerHTML = '<span class="warn">Checking ' + protocol.tracks.length + ' tracks...</span>';
+  let available = 0, missing = 0;
+  const missingNames = [];
+  for (const track of protocol.tracks) {
+    try {
+      const head = await fetch(track.src, { method: 'HEAD' });
+      if (head.ok) available++;
+      else { missing++; missingNames.push(track.title); }
+    } catch (e) { missing++; missingNames.push(track.title); }
+  }
+  if (missing === 0) status.innerHTML = '<span class="ok">All ' + protocol.tracks.length + ' tracks found.</span>';
+  else if (available === 0) status.innerHTML = '<span class="err">No track files found.</span> Session will run in silence. See README.md for the music shopping list.';
+  else status.innerHTML = '<span class="warn">' + available + ' of ' + protocol.tracks.length + ' tracks found.</span> Missing segments will play silent.<br><span style="opacity:0.7">Missing: ' + missingNames.slice(0, 3).join(', ') + (missingNames.length > 3 ? ', and ' + (missingNames.length - 3) + ' more' : '') + '</span>';
+}
+
+document.getElementById('audio-options').addEventListener('click', e => {
+  const btn = e.target.closest('.option');
+  if (!btn) return;
+  document.querySelectorAll('#audio-options .option').forEach(el => el.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.audioMode = btn.dataset.mode;
+  document.getElementById('audio-mode-value').textContent = state.audioMode;
+});
+
+const brightnessInput = document.getElementById('brightness');
+brightnessInput.addEventListener('input', () => {
+  state.masterBrightness = parseFloat(brightnessInput.value);
+  document.getElementById('brightness-value').textContent = Math.round(state.masterBrightness * 100) + '%';
+});
+
+async function startSession() {
+  const protocol = PROTOCOLS[state.selectedProtocolId];
+  if (!protocol) return;
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('session').classList.add('active');
+  await enterFullscreen();
+  acquireWakeLock();
+  session = new Session(protocol, state.audioMode);
+  await session.prepare();
+  session.start();
+}
+
+if (DEV_MODE) console.log('[Lumen] DEV MODE active. SPEED =', SPEED + 'x');
+</script>
+</body>
+</html>
